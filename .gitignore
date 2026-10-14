@@ -1,0 +1,12 @@
+# Operating system and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Python caches and virtual environments
+__pycache__/
+.venv/
+
+# Local environment: only .env.example is versioned
+.env
