@@ -1,0 +1,5 @@
+# Never sent to the Docker build context
+.env
+.git
+__pycache__/
+.venv/
