@@ -182,7 +182,7 @@ class Diagram:
                 if x0 < rx + rw and x1 > rx and y0 < ry + rh and y1 > ry:
                     self.problems.append(f'label "{s}" overlaps box "{rid}"')
             if x0 < 8 or x1 > self.w - 8:
-                self.problems.append(f'label "{s}" leaves the canvas')
+                self.problems.append(f'label "{s}" leaves the figure')
         for i, a in enumerate(self.labels):
             for b in self.labels[i + 1:]:
                 if a[0] < b[2] and a[2] > b[0] and a[1] < b[3] and a[3] > b[1]:
@@ -216,12 +216,13 @@ def fig01():
     d = Diagram('01-runtime-topology', 960, 580,
                 'Runtime topology: one service, one database, effects only through the outbox',
                 'Every arrow is a call that exists at runtime; nothing in the request path reaches push or the ERP',
-                'Runtime topology: the screen calls orderflow-engine-api over HTTPS; inside the service, the web adapter invokes '
-                'the use cases, which call the pure pricing engine and the persistence adapter; PostgreSQL is the single '
-                'source of truth; the outbox relay is the only component that calls the push gateway and the ERP.',
-                'Source: SPEC §7, §12 · push and ERP are fakes in this delivery')
+                'Runtime topology: the browser loads the web client from the nginx of orderflow-engine-web, which forwards '
+                '/api/ to orderflow-engine-api over HTTP, so the browser sees one origin; inside the service, the web adapter '
+                'invokes the use cases, which call the pure pricing engine and the persistence adapter; PostgreSQL is the '
+                'single source of truth; the outbox relay is the only component that calls the push gateway and the ERP.',
+                'Source: SPEC §7, §10, §12 · architecture.md §1.1 · push and ERP are fakes in this delivery')
     d.group(280, 88, 640, 310, 'orderflow-engine-api · Spring Boot · one deployable', kind='group')
-    d.box(40, 130, 180, 52, 'Order-summary screen', 'Angular · web repository')
+    d.box(40, 124, 180, 64, 'orderflow-engine-web', 'Angular · full order flow', 'nginx forwards /api/')
     d.box(300, 130, 170, 52, 'Web adapter', 'REST · problem+json')
     d.box(520, 130, 180, 52, 'Use cases', 'quote · confirm · history', kind='key')
     d.box(750, 130, 150, 52, 'Pricing engine', 'pure · no I/O')
@@ -230,7 +231,7 @@ def fig01():
     d.box(520, 450, 180, 56, 'PostgreSQL', 'single source of truth', kind='key')
     d.box(40, 262, 180, 48, 'Push gateway', 'dedupes by event_id')
     d.box(40, 342, 180, 48, 'ERP', 'upserts by order number')
-    d.edge([(220, 156), (297, 156)]); d.label(258, 148, 'HTTPS · JSON')
+    d.edge([(220, 156), (297, 156)]); d.label(258, 148, 'HTTP · /api/')
     d.edge([(470, 156), (517, 156)]); d.label(495, 148, 'invokes')
     d.edge([(700, 156), (747, 156)]); d.label(725, 148, 'price()')
     d.edge([(610, 182), (610, 297)]); d.label(618, 244, 'load · save · lock', anchor='start')
@@ -249,14 +250,14 @@ def fig02():
     d = Diagram('02-workspace-repositories', 960, 470,
                 'Workspace: six folders, each a future repository',
                 'Arrows show what each repository takes from another; the specification governs all of them',
-                'Workspace: orderflow-engine-docs specifies the API, the web screen and the infrastructure; '
+                'Workspace: orderflow-engine-docs specifies the API, the web client and the infrastructure; '
                 'orderflow-engine-tools generates the figures, the progress chart and the ADR in Word and PDF into '
-                'orderflow-engine-docs; the web screen reads the quote contract of the API; orderflow-engine-infra provides '
+                'orderflow-engine-docs; the web client reads the API contract of orderflow-engine-api; orderflow-engine-infra provides '
                 'the full stack with Docker Compose and runs the tests; orderflow-engine-app is reserved; orderflow-engine-api is the deliverable.',
                 'Source: SPEC §15 · ADR-0001')
     d.box(370, 84, 220, 60, 'orderflow-engine-docs', 'spec · contract · results', kind='key')
     d.box(690, 84, 220, 60, 'orderflow-engine-tools', 'generators · checks')
-    d.box(50, 224, 220, 60, 'orderflow-engine-web', 'Angular order-summary screen')
+    d.box(50, 224, 220, 60, 'orderflow-engine-web', 'Angular · full order flow · nginx')
     d.box(370, 224, 220, 60, 'orderflow-engine-api', 'the deliverable · code · ADR', kind='key')
     d.box(690, 224, 220, 60, 'orderflow-engine-infra', 'full-stack compose · test-all')
     d.box(50, 360, 220, 56, 'orderflow-engine-app', 'reserved · not built', kind='muted')
@@ -267,7 +268,7 @@ def fig02():
     d.label(300, 176, 'specifies')
     d.label(665, 176, 'specifies')
     d.label(488, 206, 'specifies', anchor='start')
-    d.edge([(270, 254), (367, 254)]); d.label(320, 246, 'quote contract')
+    d.edge([(270, 254), (367, 254)]); d.label(320, 246, 'API contract')
     d.edge([(690, 254), (593, 254)]); d.label(640, 246, 'runs tests')
     d.edge([(800, 284), (800, 322), (160, 322), (160, 287)]); d.label(480, 314, 'runs tests')
     d.note(330, 352, 600, 72, 'Why separate repositories',
@@ -287,11 +288,11 @@ def fig03():
     for x, label in [(40, 'Driving adapters'), (270, 'Inbound ports'), (510, 'Application core'),
                      (790, 'Outbound ports'), (980, 'Driven adapters')]:
         d.text(x, 92, label, 11, 600, anchor='start', cls='keyt')
-    d.box(40, 130, 170, 56, 'REST controllers', 'quotes · orders')
+    d.box(40, 130, 170, 56, 'REST controllers', 'quotes · orders · products')
     d.box(40, 300, 170, 56, 'Scheduled jobs', 'relay · housekeeping')
     d.rect(270, 110, 180, 270, 'node', rid='inbound')
-    for i, s in enumerate(['CreateQuote', 'GetQuote', 'ConfirmOrder', 'GetOrder · ListOrders', 'RelayOutbox',
-                           'Housekeep']):
+    for i, s in enumerate(['CreateQuote', 'GetQuote · ListProducts', 'ConfirmOrder', 'GetOrder · ListOrders',
+                           'RelayOutbox', 'Housekeep']):
         d.text(360, 140 + i * 42, s, 11.5, 600, cls='t')
     d.group(500, 110, 240, 270, 'use cases implement the ports', kind='group')
     d.box(520, 140, 200, 40, 'quoting', kind='node', size=11.5)
