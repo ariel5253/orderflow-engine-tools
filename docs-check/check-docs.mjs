@@ -101,9 +101,10 @@ for (const index of config.indexes) {
   for (const target of links(text)) {
     if (!isExternal(target)) indexed.add(resolveLink(index, target));
   }
-  // Documents of other repositories are cited by workspace path, without a link (see rule 5).
+  // Documents of other repositories are cited by workspace path, without a link (see rule 5). A repository that is
+  // not cloned in this workspace is skipped, so a reader can check a subset; a cloned one must hold the document.
   for (const m of text.matchAll(/`((?:orderflow-engine-[a-z]+)\/[^`\s]+\.md)`/g)) {
-    if (!exists(m[1])) fail(index, `cited document ${m[1]} does not exist`);
+    if (!exists(m[1]) && exists(m[1].split('/')[0])) fail(index, `cited document ${m[1]} does not exist`);
     indexed.add(m[1]);
   }
 }
